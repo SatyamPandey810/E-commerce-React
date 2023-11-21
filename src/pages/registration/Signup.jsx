@@ -1,6 +1,50 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
+import myContext from '../../context/data/MyContext';
+import Loader from '../../components/loader/Loader';
+import { Link } from 'react-router-dom';
+import { createUserWithEmailAndPassword } from "firebase/auth"
+import { toast } from 'react-toastify';
+import { auth, fireDB } from '../../firebase/FirebaseConfig';
+import { Timestamp, addDoc, collection } from 'firebase/firestore';
+
 
 const Signup = () => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState();
+    const [password, setPassword] = useState();
+
+    const context = useContext(myContext)
+    const { loading, setLoading } = context;
+
+    const signUp = async () => {
+        setLoading(true)
+        if (name === "" || email === "" || password === "") {
+            return toast.error("All required fields")
+        }
+        try {
+            const users = await createUserWithEmailAndPassword(auth, email, password)
+
+            const user = {
+                name: name,
+                uid: users.user.uid,
+                email: users.user.email,
+                time: Timestamp.now()
+            }
+            const userRef = collection(fireDB, "users")
+            await addDoc(userRef, user)
+            toast.success("SignUp Successfully")
+            setName("");
+            setEmail("");
+            setPassword("");
+            setLoading(false);
+
+        } catch (error) {
+            console.log(error);
+            setLoading(false);
+        }
+    }
+
+
     return (
         <div className=' flex justify-center items-center h-screen'>
             {loading && <Loader />}
@@ -38,7 +82,7 @@ const Signup = () => {
                 </div>
                 <div className=' flex justify-center mb-3'>
                     <button
-                        onClick={signup}
+                        onClick={signUp}
                         className=' bg-red-500 w-full text-white font-bold  px-2 py-2 rounded-lg'>
                         Signup
                     </button>
